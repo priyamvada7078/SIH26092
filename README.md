@@ -6,7 +6,7 @@ A full-stack web application developed for Smart India Hackathon (SIH26092) to h
 
 ### Frontend
 
-https://sih26092-frontend.onrender.com/matcher
+https://sih26092-frontend.onrender.com
 
 ### Backend API
 
