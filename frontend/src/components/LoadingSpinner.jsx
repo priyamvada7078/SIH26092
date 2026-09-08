@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function LoadingSpinner({ message = 'Loading...', size = 'md' }) {
   const isSm = size === 'sm';
 

@@ -147,7 +147,7 @@ export async function getPartners() {
 
 /**
  * Find nearby channel partners by lat/lon & radius
- * @param {Object} data { latitude, longitude, radius_km }
+ * @param {Object} data { latitude, longitude, radius_km, scheme_name? }
  */
 export async function findNearbyPartners(data) {
   const payload = {
@@ -155,6 +155,9 @@ export async function findNearbyPartners(data) {
     longitude: Number(data.longitude),
     radius_km: Number(data.radius_km),
   };
+  if (data.scheme_name) {
+    payload.scheme_name = data.scheme_name;
+  }
   return request('/partners/nearby', {
     method: 'POST',
     body: JSON.stringify(payload),

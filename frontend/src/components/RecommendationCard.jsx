@@ -1,14 +1,9 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Sparkles,
   Award,
   HelpCircle,
-  TrendingDown,
-  Calendar,
-  IndianRupee,
   Layers,
-  ArrowRight,
   Calculator,
   MapPin,
   AlertCircle,
@@ -16,9 +11,11 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { formatINR, formatPercent } from '../utils/formatters';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function RecommendationCard({ recommendation, onReset }) {
   const navigate = useNavigate();
+  const { language, t } = useLanguage();
 
   if (!recommendation) return null;
 
@@ -33,7 +30,8 @@ export default function RecommendationCard({ recommendation, onReset }) {
     alternatives = [],
   } = recommendation;
 
-  // If ineligible
+  const translatedReason = language === 'hi' ? t('recommendation.hindiReason') : reason;
+
   if (!eligible) {
     return (
       <div className="ineligible-card" role="region" aria-label="Recommendation Result">
@@ -41,19 +39,19 @@ export default function RecommendationCard({ recommendation, onReset }) {
           <AlertCircle size={28} />
         </div>
         <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#991b1b', marginBottom: '0.75rem' }}>
-          No Suitable Scheme Found
+          {t('recommendation.noScheme')}
         </h3>
         <p style={{ fontSize: '0.95rem', color: 'var(--slate-600)', lineHeight: '1.6', maxWidth: '540px', margin: '0 auto 1.5rem' }}>
-          {reason || 'No suitable scheme was found based on the information provided.'}
+          {language === 'hi' ? t('recommendation.noSchemeFallback') : reason || t('recommendation.noSchemeFallback')}
         </p>
         <div className="alert alert-warning" style={{ textAlign: 'left', maxWidth: '540px', margin: '0 auto 1.5rem' }}>
           <HelpCircle size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
           <div style={{ fontSize: '0.875rem' }}>
-            <strong>Recommendation Suggestion:</strong> You can modify your project cost, annual income, or project category to discover other concessional loan opportunities.
+            <strong>{t('recommendation.suggestionTitle')}</strong> {t('recommendation.suggestion')}
           </div>
         </div>
         <button type="button" className="btn btn-secondary" onClick={onReset}>
-          <RefreshCw size={16} /> Modify Details & Try Again
+          <RefreshCw size={16} /> {t('recommendation.retry')}
         </button>
       </div>
     );
@@ -72,88 +70,80 @@ export default function RecommendationCard({ recommendation, onReset }) {
   };
 
   const handleFindPartners = () => {
-    navigate('/partners');
+    navigate('/partners', {
+      state: {
+        scheme_name,
+      },
+    });
   };
 
   return (
     <div className="recommendation-card" role="region" aria-label="Recommendation Result">
-      {/* Top Banner & Header */}
       <div className="recommendation-header">
         <div className="recommendation-badge-top">
-          <Sparkles size={16} /> Top Recommended Scheme
+          <Sparkles size={16} /> {t('recommendation.top')}
         </div>
         <h2 className="recommendation-scheme-name">{scheme_name}</h2>
       </div>
 
-      {/* Primary Metrics Strip */}
       <div className="metrics-strip">
         <div className="metric-item">
-          <span className="metric-label">Concessional Rate</span>
-          <span className="metric-value metric-value-accent">
-            {formatPercent(interest_rate)}
-          </span>
-          <span className="metric-sub">Annual reducing rate</span>
+          <span className="metric-label">{t('recommendation.rate')}</span>
+          <span className="metric-value metric-value-accent">{formatPercent(interest_rate)}</span>
+          <span className="metric-sub">{t('recommendation.rateSub')}</span>
         </div>
 
         <div className="metric-item">
-          <span className="metric-label">Maximum Funding</span>
+          <span className="metric-label">{t('recommendation.maxFunding')}</span>
           <span className="metric-value">{formatINR(maximum_amount)}</span>
-          <span className="metric-sub">Direct loan ceiling</span>
+          <span className="metric-sub">{t('recommendation.maxFundingSub')}</span>
         </div>
 
         <div className="metric-item">
-          <span className="metric-label">Moratorium Holiday</span>
-          <span className="metric-value">{moratorium_months} Months</span>
-          <span className="metric-sub">Zero repayment period</span>
+          <span className="metric-label">{t('recommendation.moratorium')}</span>
+          <span className="metric-value">{moratorium_months} {t('recommendation.months')}</span>
+          <span className="metric-sub">{t('recommendation.moratoriumSub')}</span>
         </div>
       </div>
 
-      {/* Confidence Score Bar */}
       <div className="confidence-bar-wrap">
         <div className="confidence-header">
           <span className="confidence-title">
             <Award size={16} color="var(--accent-teal-700)" />
-            Rule-Based Match Confidence
+            {t('recommendation.confidence')}
           </span>
-          <span className="confidence-percent">{confidencePercent}% Match</span>
+          <span className="confidence-percent">{confidencePercent}% {t('recommendation.match')}</span>
         </div>
         <div className="progress-track">
           <div className="progress-fill" style={{ width: `${confidencePercent}%` }} />
         </div>
       </div>
 
-      {/* Explainability Reason Box */}
       <div className="explainability-box">
         <div className="explainability-box-title">
           <CheckCircle2 size={16} color="var(--accent-teal-700)" />
-          Why This Scheme Was Selected:
+          {t('recommendation.why')}
         </div>
-        <p className="explainability-text">{reason}</p>
+        <p className="explainability-text">{translatedReason}</p>
       </div>
 
-      {/* Action Buttons */}
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: alternatives.length > 0 ? '1.5rem' : 0 }}>
         <button
           type="button"
           className="btn btn-primary btn-sm"
           onClick={() => handleCalculateEMI(maximum_amount, interest_rate, moratorium_months)}
         >
-          <Calculator size={16} /> Calculate Repayment EMI
+          <Calculator size={16} /> {t('recommendation.calculate')}
         </button>
-        <button
-          type="button"
-          className="btn btn-secondary btn-sm"
-          onClick={handleFindPartners}
-        >
-          <MapPin size={16} /> Find Channel Partner
+        <button type="button" className="btn btn-secondary btn-sm" onClick={handleFindPartners}>
+          <MapPin size={16} /> {t('recommendation.findPartner')}
         </button>
       </div>
 
-      {/* Alternatives Section */}
       {alternatives.length > 0 && (
         <div className="alternatives-section">
           <h3 className="alternatives-heading">
-            <Layers size={18} color="var(--primary-700)" /> Other Eligible Options ({alternatives.length})
+            <Layers size={18} color="var(--primary-700)" /> {t('recommendation.alternatives')} ({alternatives.length})
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {alternatives.map((alt, idx) => (
@@ -164,13 +154,13 @@ export default function RecommendationCard({ recommendation, onReset }) {
                 </div>
 
                 <div className="alternative-stats">
-                  <span><strong>Max Amount:</strong> {formatINR(alt.maximum_amount)}</span>
-                  <span>•</span>
-                  <span><strong>Moratorium:</strong> {alt.moratorium_months} Months</span>
+                  <span><strong>{t('recommendation.maxAmount')}</strong> {formatINR(alt.maximum_amount)}</span>
+                  <span>-</span>
+                  <span><strong>{t('recommendation.moratoriumLabel')}</strong> {alt.moratorium_months} {t('recommendation.months')}</span>
                 </div>
 
                 <p style={{ fontSize: '0.8125rem', color: 'var(--slate-600)', marginBottom: '0.75rem', lineHeight: '1.4' }}>
-                  {alt.reason}
+                  {language === 'hi' ? t('recommendation.hindiReason') : alt.reason}
                 </p>
 
                 <button
@@ -178,7 +168,7 @@ export default function RecommendationCard({ recommendation, onReset }) {
                   className="btn btn-outline btn-sm"
                   onClick={() => handleCalculateEMI(alt.maximum_amount, alt.interest_rate, alt.moratorium_months)}
                 >
-                  <Calculator size={14} /> Calculate EMI for {alt.scheme_name}
+                  <Calculator size={14} /> {t('recommendation.calculateFor')} {alt.scheme_name}
                 </button>
               </div>
             ))}

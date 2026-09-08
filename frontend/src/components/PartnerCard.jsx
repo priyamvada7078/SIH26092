@@ -1,17 +1,30 @@
-import React from 'react';
 import { MapPin, Building, CheckCircle2, AlertTriangle, Layers, Navigation } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function PartnerCard({ partner }) {
+  const { t } = useLanguage();
+  const availabilityLabel = {
+    available: t('partners.card.available'),
+    limited: t('partners.card.limited'),
+    unavailable: t('partners.card.unavailable'),
+  }[partner.availability_status] || t('partners.card.prototypeStatus');
+
+  const eligibilityLabel = {
+    eligible: t('partners.card.eligible'),
+    under_review: t('partners.card.underReview'),
+    inactive: t('partners.card.inactive'),
+  }[partner.eligibility_status] || t('partners.card.prototypeEligibility');
+
   const getPartnerTypeLabel = (type) => {
     switch (type) {
       case 'PSB':
-        return 'Public Sector Bank';
+        return t('partners.card.publicBank');
       case 'RRB':
-        return 'Regional Rural Bank';
+        return t('partners.card.ruralBank');
       case 'SCA':
-        return 'State Channelising Agency';
+        return t('partners.card.sca');
       case 'NBFC-MFI':
-        return 'NBFC Microfinance Institution';
+        return t('partners.card.nbfc');
       default:
         return type;
     }
@@ -33,11 +46,11 @@ export default function PartnerCard({ partner }) {
         {partner.distance_km !== undefined ? (
           <div className="partner-distance-badge">
             <Navigation size={14} />
-            <span>{partner.distance_km} km away</span>
+            <span>{partner.distance_km} {t('partners.card.away')}</span>
           </div>
         ) : (
           <span className={`badge ${partner.active ? 'badge-success' : 'badge-gray'}`}>
-            {partner.active ? 'Active Channel' : 'Inactive'}
+            {availabilityLabel}
           </span>
         )}
       </div>
@@ -50,27 +63,25 @@ export default function PartnerCard({ partner }) {
         </div>
         <div className="partner-meta-tag">
           <Building size={16} color="var(--slate-500)" />
-          <span>Authorized MoSJE Partner</span>
+          <span>{t('partners.card.demoPartner')}</span>
         </div>
-        {partner.distance_km !== undefined && (
-          <div className="partner-meta-tag">
-            {partner.active ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--success-text)', fontSize: '0.8125rem', fontWeight: 600 }}>
-                <CheckCircle2 size={14} /> Accepting Applications
-              </span>
-            ) : (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: '#991b1b', fontSize: '0.8125rem' }}>
-                <AlertTriangle size={14} /> Inactive
-              </span>
-            )}
-          </div>
-        )}
+        <div className="partner-meta-tag">
+          {partner.eligibility_status === 'eligible' && partner.availability_status !== 'unavailable' ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--success-text)', fontSize: '0.8125rem', fontWeight: 600 }}>
+              <CheckCircle2 size={14} /> {eligibilityLabel} / {availabilityLabel}
+            </span>
+          ) : (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: '#991b1b', fontSize: '0.8125rem' }}>
+              <AlertTriangle size={14} /> {eligibilityLabel} / {availabilityLabel}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Supported Schemes */}
       <div>
         <div className="partner-schemes-label" style={{ marginBottom: '0.4rem' }}>
-          Supported Concessional Schemes:
+          {t('partners.card.schemes')}
         </div>
         <div className="partner-schemes-wrap">
           {partner.supported_schemes && partner.supported_schemes.length > 0 ? (
@@ -80,7 +91,7 @@ export default function PartnerCard({ partner }) {
               </span>
             ))
           ) : (
-            <span style={{ fontSize: '0.8125rem', color: 'var(--slate-400)' }}>All verified schemes</span>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--slate-400)' }}>{t('partners.card.noMapping')}</span>
           )}
         </div>
       </div>

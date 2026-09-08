@@ -1,24 +1,22 @@
-import React, { useEffect, useState } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   X,
   ShieldCheck,
-  Percent,
-  Calendar,
-  IndianRupee,
-  Layers,
-  GraduationCap,
   Sparkles,
   ArrowRight,
   Calculator,
 } from 'lucide-react';
 import { getScheme } from '../services/api';
-import { formatINR, formatPercent, humanizeProjectType, humanizeEducationStatus } from '../utils/formatters';
+import { formatINR, formatPercent } from '../utils/formatters';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function SchemeDetailsModal({ schemeId, onClose }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [scheme, setScheme] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,7 +30,7 @@ export default function SchemeDetailsModal({ schemeId, onClose }) {
         const data = await getScheme(schemeId);
         if (isMounted) setScheme(data);
       } catch (err) {
-        if (isMounted) setError(err.message || 'Failed to load scheme details.');
+        if (isMounted) setError(err.message || t('schemes.modal.failed'));
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -75,17 +73,17 @@ export default function SchemeDetailsModal({ schemeId, onClose }) {
         <div className="modal-header">
           <div>
             <span className="badge badge-primary" style={{ marginBottom: '0.25rem' }}>
-              Official Demo Scheme
+              {t('schemes.modal.badge')}
             </span>
             <h2 className="modal-title">
-              {loading ? 'Loading Details...' : scheme ? scheme.name : 'Scheme Details'}
+              {loading ? t('schemes.modal.loadingTitle') : scheme ? scheme.name : t('schemes.modal.title')}
             </h2>
           </div>
           <button
             type="button"
             className="modal-close-btn"
             onClick={onClose}
-            aria-label="Close modal"
+            aria-label={t('schemes.modal.close')}
           >
             <X size={22} />
           </button>
@@ -93,7 +91,7 @@ export default function SchemeDetailsModal({ schemeId, onClose }) {
 
         {/* Body */}
         <div className="modal-body">
-          {loading && <LoadingSpinner message="Fetching verified scheme parameters..." />}
+          {loading && <LoadingSpinner message={t('schemes.modal.fetching')} />}
 
           {error && <ErrorMessage message={error} />}
 
@@ -117,45 +115,45 @@ export default function SchemeDetailsModal({ schemeId, onClose }) {
                 }}
               >
                 <div>
-                  <div className="scheme-meta-label">Maximum Loan Amount</div>
+                  <div className="scheme-meta-label">{t('schemes.modal.maxLoan')}</div>
                   <div style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--slate-900)' }}>
                     {formatINR(scheme.max_amount)}
                   </div>
                 </div>
 
                 <div>
-                  <div className="scheme-meta-label">Concessional Interest Rate</div>
+                  <div className="scheme-meta-label">{t('schemes.modal.interest')}</div>
                   <div style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--accent-teal-700)' }}>
                     {formatPercent(scheme.interest_rate)}
                   </div>
                 </div>
 
                 <div>
-                  <div className="scheme-meta-label">Moratorium Period</div>
+                  <div className="scheme-meta-label">{t('schemes.modal.moratorium')}</div>
                   <div style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--slate-900)' }}>
-                    {scheme.moratorium_months} Months
+                    {scheme.moratorium_months} {t('schemes.card.months')}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--slate-500)' }}>Repayment holiday</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--slate-500)' }}>{t('schemes.modal.holiday')}</div>
                 </div>
 
                 <div>
-                  <div className="scheme-meta-label">Annual Family Income Cap</div>
+                  <div className="scheme-meta-label">{t('schemes.modal.income')}</div>
                   <div style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--slate-900)' }}>
                     {formatINR(scheme.income_limit)}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--slate-500)' }}>Maximum eligibility ceiling</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--slate-500)' }}>{t('schemes.modal.ceiling')}</div>
                 </div>
               </div>
 
               {/* Eligibility Criteria */}
               <div style={{ marginBottom: '1.5rem' }}>
                 <h4 style={{ fontSize: '0.9rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--slate-700)', marginBottom: '0.6rem' }}>
-                  Supported Project Categories
+                  {t('schemes.modal.categories')}
                 </h4>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {scheme.project_types.map((t) => (
-                    <span key={t} className="badge badge-primary">
-                      {humanizeProjectType(t)}
+                  {scheme.project_types.map((type) => (
+                    <span key={type} className="badge badge-primary">
+                      {t(`commonLabels.projectTypes.${type}`)}
                     </span>
                   ))}
                 </div>
@@ -164,12 +162,12 @@ export default function SchemeDetailsModal({ schemeId, onClose }) {
               {/* Education Requirement */}
               <div style={{ marginBottom: '1rem' }}>
                 <h4 style={{ fontSize: '0.9rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--slate-700)', marginBottom: '0.6rem' }}>
-                  Education Qualification Requirements
+                  {t('schemes.modal.education')}
                 </h4>
                 <p style={{ fontSize: '0.875rem', color: 'var(--slate-600)' }}>
                   {scheme.education_required
-                    ? `Eligible for: ${scheme.education_required.map(humanizeEducationStatus).join(', ')}`
-                    : 'Open to all applicants (no mandatory educational qualification required).'}
+                    ? `${t('schemes.modal.eligibleFor')} ${scheme.education_required.map((status) => t(`commonLabels.educationStatus.${status}`)).join(', ')}`
+                    : t('schemes.modal.openToAll')}
                 </p>
               </div>
 
@@ -177,7 +175,7 @@ export default function SchemeDetailsModal({ schemeId, onClose }) {
               <div className="alert alert-info" style={{ marginTop: '1.25rem', marginBottom: 0 }}>
                 <ShieldCheck size={18} style={{ flexShrink: 0 }} />
                 <div style={{ fontSize: '0.8125rem' }}>
-                  All applications are subject to transparent verification of income certificates and project proposals through authorized channel partners.
+                  {t('schemes.modal.note')}
                 </div>
               </div>
             </div>
@@ -188,13 +186,13 @@ export default function SchemeDetailsModal({ schemeId, onClose }) {
         {scheme && (
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary btn-sm" onClick={onClose}>
-              Close
+              {t('schemes.modal.closeButton')}
             </button>
             <button type="button" className="btn btn-primary btn-sm" onClick={handleCalculateEMI}>
-              <Calculator size={14} /> Calculate EMI
+              <Calculator size={14} /> {t('schemes.modal.calculate')}
             </button>
             <button type="button" className="btn btn-teal btn-sm" onClick={handleApplyMatcher}>
-              <Sparkles size={14} /> Check Match <ArrowRight size={14} />
+              <Sparkles size={14} /> {t('schemes.modal.check')} <ArrowRight size={14} />
             </button>
           </div>
         )}

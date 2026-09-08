@@ -1,18 +1,14 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Sparkles,
-  Percent,
-  Calendar,
-  IndianRupee,
-  Layers,
   ArrowRight,
   Info,
 } from 'lucide-react';
-import { formatINR, formatPercent, humanizeProjectType } from '../utils/formatters';
+import { formatINR, formatPercent } from '../utils/formatters';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function SchemeCard({ scheme, onViewDetails }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const handleCalculateEMI = (e) => {
     e.stopPropagation();
@@ -29,7 +25,7 @@ export default function SchemeCard({ scheme, onViewDetails }) {
     <div className="scheme-card-item">
       <div className="scheme-card-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.5rem' }}>
-          <span className="badge badge-primary">Scheme #{scheme.id}</span>
+          <span className="badge badge-primary">{t('schemes.card.scheme')} #{scheme.id}</span>
           <span className="badge badge-teal">{formatPercent(scheme.interest_rate)}</span>
         </div>
         <h3 className="scheme-name">{scheme.name}</h3>
@@ -40,19 +36,19 @@ export default function SchemeCard({ scheme, onViewDetails }) {
       {/* Meta Grid */}
       <div className="scheme-meta-grid">
         <div className="scheme-meta-item">
-          <span className="scheme-meta-label">Max Funding</span>
+          <span className="scheme-meta-label">{t('schemes.card.maxFunding')}</span>
           <span className="scheme-meta-value">{formatINR(scheme.max_amount)}</span>
         </div>
         <div className="scheme-meta-item">
-          <span className="scheme-meta-label">Moratorium</span>
-          <span className="scheme-meta-value">{scheme.moratorium_months} Months</span>
+          <span className="scheme-meta-label">{t('schemes.card.moratorium')}</span>
+          <span className="scheme-meta-value">{scheme.moratorium_months} {t('schemes.card.months')}</span>
         </div>
         <div className="scheme-meta-item">
-          <span className="scheme-meta-label">Income Cap</span>
+          <span className="scheme-meta-label">{t('schemes.card.incomeCap')}</span>
           <span className="scheme-meta-value">{formatINR(scheme.income_limit)}</span>
         </div>
         <div className="scheme-meta-item">
-          <span className="scheme-meta-label">Interest Rate</span>
+          <span className="scheme-meta-label">{t('schemes.card.interest')}</span>
           <span className="scheme-meta-value" style={{ color: 'var(--accent-teal-700)' }}>
             {scheme.interest_rate}% p.a.
           </span>
@@ -62,12 +58,12 @@ export default function SchemeCard({ scheme, onViewDetails }) {
       {/* Project Types */}
       <div style={{ marginBottom: '1.25rem' }}>
         <div style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--slate-500)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-          Eligible Project Types:
+          {t('schemes.card.eligibleTypes')}
         </div>
         <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
           {scheme.project_types.map((type) => (
             <span key={type} className="badge badge-gray">
-              {humanizeProjectType(type)}
+              {t(`commonLabels.projectTypes.${type}`)}
             </span>
           ))}
         </div>
@@ -81,7 +77,7 @@ export default function SchemeCard({ scheme, onViewDetails }) {
           style={{ flex: 1 }}
           onClick={() => onViewDetails && onViewDetails(scheme)}
         >
-          <Info size={14} /> View Details
+          <Info size={14} /> {t('schemes.card.details')}
         </button>
         <button
           type="button"
@@ -89,7 +85,7 @@ export default function SchemeCard({ scheme, onViewDetails }) {
           style={{ flex: 1 }}
           onClick={handleCalculateEMI}
         >
-          Calculate EMI <ArrowRight size={14} />
+          {t('schemes.card.calculate')} <ArrowRight size={14} />
         </button>
       </div>
     </div>

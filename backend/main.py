@@ -132,6 +132,8 @@ PARTNERS = [
         "state": "Delhi",
         "supported_schemes": ["Micro Finance Scheme", "Term Loan"],
         "active": True,
+        "eligibility_status": "eligible",
+        "availability_status": "available",
     },
     {
         "id": 2,
@@ -143,6 +145,8 @@ PARTNERS = [
         "state": "Uttar Pradesh",
         "supported_schemes": ["Micro Finance Scheme", "Educational Loan"],
         "active": True,
+        "eligibility_status": "eligible",
+        "availability_status": "available",
     },
     {
         "id": 3,
@@ -154,6 +158,8 @@ PARTNERS = [
         "state": "Maharashtra",
         "supported_schemes": ["Term Loan", "Educational Loan"],
         "active": True,
+        "eligibility_status": "eligible",
+        "availability_status": "available",
     },
     {
         "id": 4,
@@ -165,6 +171,8 @@ PARTNERS = [
         "state": "Karnataka",
         "supported_schemes": ["Micro Finance Scheme"],
         "active": True,
+        "eligibility_status": "eligible",
+        "availability_status": "available",
     },
     {
         "id": 5,
@@ -176,6 +184,8 @@ PARTNERS = [
         "state": "Tamil Nadu",
         "supported_schemes": ["Micro Finance Scheme", "Term Loan", "Educational Loan"],
         "active": True,
+        "eligibility_status": "eligible",
+        "availability_status": "available",
     },
     {
         "id": 6,
@@ -187,6 +197,8 @@ PARTNERS = [
         "state": "West Bengal",
         "supported_schemes": ["Micro Finance Scheme", "Educational Loan"],
         "active": True,
+        "eligibility_status": "eligible",
+        "availability_status": "limited",
     },
     {
         "id": 7,
@@ -198,6 +210,8 @@ PARTNERS = [
         "state": "Rajasthan",
         "supported_schemes": ["Term Loan"],
         "active": True,
+        "eligibility_status": "eligible",
+        "availability_status": "available",
     },
     {
         "id": 8,
@@ -209,6 +223,8 @@ PARTNERS = [
         "state": "Uttar Pradesh",
         "supported_schemes": ["Micro Finance Scheme", "Term Loan"],
         "active": True,
+        "eligibility_status": "under_review",
+        "availability_status": "limited",
     },
     {
         "id": 9,
@@ -222,6 +238,8 @@ PARTNERS = [
         # Intentionally inactive so the /partners/nearby test can verify
         # that inactive partners are excluded from results.
         "active": False,
+        "eligibility_status": "inactive",
+        "availability_status": "unavailable",
     },
 ]
 
@@ -256,6 +274,8 @@ class PartnerResponse(BaseModel):
     state: str
     supported_schemes: List[str]
     active: bool
+    eligibility_status: str
+    availability_status: str
 
 
 class PartnersListResponse(BaseModel):
@@ -335,6 +355,7 @@ class NearbyPartnerRequest(BaseModel):
     latitude: float = Field(..., ge=-90, le=90, description="User's latitude")
     longitude: float = Field(..., ge=-180, le=180, description="User's longitude")
     radius_km: float = Field(..., gt=0, description="Search radius in kilometers")
+    scheme_name: Optional[str] = Field(None, description="Optional scheme name for compatibility filtering")
 
 
 class NearbyPartnerResult(BaseModel):
@@ -346,6 +367,8 @@ class NearbyPartnerResult(BaseModel):
     distance_km: float
     supported_schemes: List[str]
     active: bool
+    eligibility_status: str
+    availability_status: str
 
 
 class UserLocation(BaseModel):
@@ -681,6 +704,12 @@ def find_nearby_partners(request: NearbyPartnerRequest):
     for partner in PARTNERS:
         if not partner["active"]:
             continue
+        if partner["eligibility_status"] != "eligible":
+            continue
+        if partner["availability_status"] == "unavailable":
+            continue
+        if request.scheme_name and request.scheme_name not in partner["supported_schemes"]:
+            continue
 
         distance = haversine_distance_km(
             request.latitude, request.longitude,
@@ -698,6 +727,8 @@ def find_nearby_partners(request: NearbyPartnerRequest):
                     distance_km=round(distance, 2),
                     supported_schemes=partner["supported_schemes"],
                     active=partner["active"],
+                    eligibility_status=partner["eligibility_status"],
+                    availability_status=partner["availability_status"],
                 )
             )
 

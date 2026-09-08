@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Layers, Search, Filter, Sparkles, RefreshCw } from 'lucide-react';
+/* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect */
+import { useState, useEffect } from 'react';
+import { Layers, Search, Filter } from 'lucide-react';
 import { getSchemes } from '../services/api';
 import SchemeCard from '../components/SchemeCard';
 import SchemeDetailsModal from '../components/SchemeDetailsModal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function Schemes() {
+  const { t } = useLanguage();
   const [schemes, setSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,7 +24,7 @@ export default function Schemes() {
       const data = await getSchemes();
       setSchemes(data);
     } catch (err) {
-      setError(err.message || 'Unable to load schemes.');
+      setError(err.message || t('schemes.error'));
     } finally {
       setLoading(false);
     }
@@ -49,11 +52,11 @@ export default function Schemes() {
       <div className="page-header">
         <div className="container">
           <span className="badge badge-teal" style={{ marginBottom: '0.5rem' }}>
-            Ministry Catalog
+            {t('schemes.badge')}
           </span>
-          <h1 className="page-header-title">Concessional Schemes Explorer</h1>
+          <h1 className="page-header-title">{t('schemes.title')}</h1>
           <p className="page-header-subtitle">
-            Browse all official demo credit and educational loan schemes under MoSJE guidelines for marginalized beneficiaries.
+            {t('schemes.subtitle')}
           </p>
         </div>
       </div>
@@ -92,7 +95,7 @@ export default function Schemes() {
               type="text"
               className="form-control"
               style={{ paddingLeft: '2.4rem' }}
-              placeholder="Search schemes by keyword..."
+              placeholder={t('schemes.search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -107,16 +110,16 @@ export default function Schemes() {
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
             >
-              <option value="all">All Categories</option>
-              <option value="business">Business / Micro-Finance</option>
-              <option value="education">Education Schemes</option>
-              <option value="other">Other Permissible</option>
+              <option value="all">{t('schemes.all')}</option>
+              <option value="business">{t('schemes.business')}</option>
+              <option value="education">{t('schemes.education')}</option>
+              <option value="other">{t('schemes.other')}</option>
             </select>
           </div>
         </div>
 
         {/* Loading State */}
-        {loading && <LoadingSpinner message="Fetching schemes from backend..." />}
+        {loading && <LoadingSpinner message={t('schemes.loading')} />}
 
         {/* Error State */}
         {error && <ErrorMessage message={error} onRetry={fetchSchemesList} />}
@@ -138,10 +141,10 @@ export default function Schemes() {
               <div className="card" style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
                 <Layers size={40} color="var(--slate-400)" style={{ margin: '0 auto 1rem' }} />
                 <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--slate-800)', marginBottom: '0.5rem' }}>
-                  No Matching Schemes Found
+                  {t('schemes.noneTitle')}
                 </h3>
                 <p style={{ fontSize: '0.875rem', color: 'var(--slate-500)' }}>
-                  Try adjusting your search keywords or filter category.
+                  {t('schemes.noneText')}
                 </p>
                 <button
                   type="button"
@@ -152,7 +155,7 @@ export default function Schemes() {
                     setFilterType('all');
                   }}
                 >
-                  Reset Filters
+                  {t('schemes.reset')}
                 </button>
               </div>
             )}

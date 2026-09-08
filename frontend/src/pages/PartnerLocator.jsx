@@ -1,20 +1,18 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   MapPin,
   Navigation,
   Compass,
   Building,
-  AlertCircle,
-  HelpCircle,
-  Sparkles,
-  RefreshCw,
   Search,
-  Filter,
 } from 'lucide-react';
-import { findNearbyPartners, getPartners } from '../services/api';
+import { findNearbyPartners, getPartners, getSchemes } from '../services/api';
 import PartnerCard from '../components/PartnerCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const CITY_PRESETS = [
   { name: 'New Delhi (NCR)', lat: 28.6139, lon: 77.209, radius: 50 },
@@ -27,6 +25,8 @@ const CITY_PRESETS = [
 ];
 
 export default function PartnerLocator() {
+  const location = useLocation();
+  const { t } = useLanguage();
   const [coords, setCoords] = useState({
     latitude: '28.6139',
     longitude: '77.2090',
@@ -39,6 +39,8 @@ export default function PartnerLocator() {
   const [apiError, setApiError] = useState(null);
   const [nearbyResults, setNearbyResults] = useState(null);
   const [allPartners, setAllPartners] = useState([]);
+  const [schemes, setSchemes] = useState([]);
+  const [selectedScheme, setSelectedScheme] = useState(location.state?.scheme_name || '');
   const [viewAllMode, setViewAllMode] = useState(false);
 
   // Handle Search
@@ -50,15 +52,15 @@ export default function PartnerLocator() {
     const rad = Number(coords.radius_km);
 
     if (isNaN(lat) || lat < -90 || lat > 90) {
-      setApiError('Latitude must be between -90 and 90 degrees.');
+      setApiError(t('partners.errors.latitude'));
       return;
     }
     if (isNaN(lon) || lon < -180 || lon > 180) {
-      setApiError('Longitude must be between -180 and 180 degrees.');
+      setApiError(t('partners.errors.longitude'));
       return;
     }
     if (isNaN(rad) || rad <= 0) {
-      setApiError('Search radius must be greater than 0 km.');
+      setApiError(t('partners.errors.radius'));
       return;
     }
 
@@ -70,19 +72,33 @@ export default function PartnerLocator() {
         latitude: lat,
         longitude: lon,
         radius_km: rad,
+        scheme_name: selectedScheme,
       });
       setNearbyResults(res);
     } catch (err) {
-      setApiError(err.message || 'Failed to locate nearby partners.');
+      setApiError(err.message || t('partners.errors.fallback'));
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    async function loadSchemes() {
+      try {
+        const data = await getSchemes();
+        setSchemes(data);
+      } catch {
+        setSchemes([]);
+      }
+    }
+
+    loadSchemes();
+  }, []);
+
   // Browser Geolocation
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
-      setGeoMsg({ type: 'warning', text: 'Geolocation is not supported by your browser. Please enter coordinates manually.' });
+      setGeoMsg({ type: 'warning', text: t('partners.geoUnsupported') });
       return;
     }
 
@@ -97,13 +113,13 @@ export default function PartnerLocator() {
           longitude: position.coords.longitude.toFixed(4),
         }));
         setGeoLocating(false);
-        setGeoMsg({ type: 'success', text: 'Location detected successfully!' });
+        setGeoMsg({ type: 'success', text: t('partners.geoSuccess') });
       },
       (error) => {
         setGeoLocating(false);
-        let msg = 'Unable to retrieve your location. You can enter latitude/longitude manually.';
+        let msg = t('partners.geoFailure');
         if (error.code === error.PERMISSION_DENIED) {
-          msg = 'Location access was denied. Please enter coordinates manually or choose a city preset below.';
+          msg = t('partners.geoDenied');
         }
         setGeoMsg({ type: 'warning', text: msg });
       },
@@ -131,7 +147,7 @@ export default function PartnerLocator() {
       const data = await getPartners();
       setAllPartners(data);
     } catch (err) {
-      setApiError(err.message || 'Unable to fetch partners list.');
+      setApiError(err.message || t('partners.errors.allFallback'));
     } finally {
       setLoading(false);
     }
@@ -149,11 +165,11 @@ export default function PartnerLocator() {
       <div className="page-header">
         <div className="container">
           <span className="badge badge-teal" style={{ marginBottom: '0.5rem' }}>
-            Geo-Spatial Haversine Locator
+            {t('partners.badge')}
           </span>
-          <h1 className="page-header-title">Find a Channel Partner</h1>
+          <h1 className="page-header-title">{t('partners.title')}</h1>
           <p className="page-header-subtitle">
-            Locate authorized Public Sector Banks, Regional Rural Banks, and State Channelising Agencies near you to submit your loan application.
+            {t('partners.subtitle')}
           </p>
         </div>
       </div>
@@ -177,7 +193,7 @@ export default function PartnerLocator() {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--slate-700)', fontWeight: 600 }}>
             <MapPin size={16} color="var(--primary-600)" />
-            <span>Select Demo City Coordinates:</span>
+            <span>{t('partners.cityTitle')}</span>
           </div>
           <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
             {CITY_PRESETS.map((city) => (
@@ -198,7 +214,7 @@ export default function PartnerLocator() {
           {/* Search Form Sidebar */}
           <div className="card">
             <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-              <Compass size={20} color="var(--primary-700)" /> Search Location
+              <Compass size={20} color="var(--primary-700)" /> {t('partners.formTitle')}
             </h2>
 
             {/* Geolocation Button */}
@@ -210,7 +226,7 @@ export default function PartnerLocator() {
               style={{ marginBottom: '1rem' }}
             >
               <Navigation size={16} color="var(--primary-600)" />
-              {geoLocating ? 'Detecting Location...' : 'Use My Current Location'}
+              {geoLocating ? t('partners.detecting') : t('partners.useLocation')}
             </button>
 
             {geoMsg && (
@@ -226,7 +242,7 @@ export default function PartnerLocator() {
               {/* Latitude */}
               <div className="form-group">
                 <label className="form-label" htmlFor="latitude">
-                  Latitude
+                  {t('partners.fields.latitude')}
                 </label>
                 <input
                   type="number"
@@ -239,13 +255,13 @@ export default function PartnerLocator() {
                   step="0.0001"
                   required
                 />
-                <div className="form-hint">Decimal degrees (-90 to 90)</div>
+                <div className="form-hint">{t('partners.hints.latitude')}</div>
               </div>
 
               {/* Longitude */}
               <div className="form-group">
                 <label className="form-label" htmlFor="longitude">
-                  Longitude
+                  {t('partners.fields.longitude')}
                 </label>
                 <input
                   type="number"
@@ -258,13 +274,34 @@ export default function PartnerLocator() {
                   step="0.0001"
                   required
                 />
-                <div className="form-hint">Decimal degrees (-180 to 180)</div>
+                <div className="form-hint">{t('partners.hints.longitude')}</div>
               </div>
 
               {/* Radius */}
               <div className="form-group">
+                <label className="form-label" htmlFor="scheme_name">
+                  {t('partners.fields.scheme')}
+                </label>
+                <select
+                  id="scheme_name"
+                  name="scheme_name"
+                  className="form-control"
+                  value={selectedScheme}
+                  onChange={(e) => setSelectedScheme(e.target.value)}
+                >
+                  <option value="">{t('partners.anyScheme')}</option>
+                  {schemes.map((scheme) => (
+                    <option key={scheme.id} value={scheme.name}>
+                      {scheme.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="form-hint">{t('partners.hints.scheme')}</div>
+              </div>
+
+              <div className="form-group">
                 <label className="form-label" htmlFor="radius_km">
-                  Search Radius (km)
+                  {t('partners.fields.radius')}
                 </label>
                 <select
                   id="radius_km"
@@ -273,12 +310,12 @@ export default function PartnerLocator() {
                   value={coords.radius_km}
                   onChange={(e) => setCoords({ ...coords, radius_km: e.target.value })}
                 >
-                  <option value="25">Within 25 km</option>
-                  <option value="50">Within 50 km</option>
-                  <option value="100">Within 100 km</option>
-                  <option value="250">Within 250 km</option>
-                  <option value="500">Within 500 km</option>
-                  <option value="1500">Within 1500 km (Pan-India)</option>
+                  <option value="25">{t('partners.radii.km25')}</option>
+                  <option value="50">{t('partners.radii.km50')}</option>
+                  <option value="100">{t('partners.radii.km100')}</option>
+                  <option value="250">{t('partners.radii.km250')}</option>
+                  <option value="500">{t('partners.radii.km500')}</option>
+                  <option value="1500">{t('partners.radii.km1500')}</option>
                 </select>
               </div>
 
@@ -289,7 +326,7 @@ export default function PartnerLocator() {
                 disabled={loading}
                 style={{ marginTop: '0.5rem' }}
               >
-                {loading ? <LoadingSpinner size="sm" /> : <Search size={16} />} Find Nearby Partners
+                {loading ? <LoadingSpinner size="sm" /> : <Search size={16} />} {t('partners.find')}
               </button>
 
               <button
@@ -298,7 +335,7 @@ export default function PartnerLocator() {
                 onClick={handleViewAll}
                 style={{ marginTop: '0.75rem' }}
               >
-                <Building size={14} /> View All Partners ({allPartners.length || 'All'})
+                <Building size={14} /> {t('partners.viewAll')} ({allPartners.length || t('schemes.all')})
               </button>
             </form>
           </div>
@@ -307,17 +344,18 @@ export default function PartnerLocator() {
           <div className="partners-results-container">
             {apiError && <ErrorMessage message={apiError} onRetry={handleSearch} />}
 
-            {loading && <LoadingSpinner message="Calculating nearest partner branches via Haversine distance..." />}
+            {loading && <LoadingSpinner message={t('partners.loading')} />}
 
             {/* Nearby Mode Results */}
             {!loading && !viewAllMode && nearbyResults && (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--slate-900)' }}>
-                    Nearby Partners Found ({nearbyResults.partners.length})
+                    {t('partners.found')} ({nearbyResults.partners.length})
                   </h3>
                   <span style={{ fontSize: '0.85rem', color: 'var(--slate-500)' }}>
-                    Within {nearbyResults.radius_km} km of ({nearbyResults.user_location.latitude}, {nearbyResults.user_location.longitude})
+                    {t('partners.within')} {nearbyResults.radius_km} {t('partners.of')} ({nearbyResults.user_location.latitude}, {nearbyResults.user_location.longitude})
+                    {selectedScheme ? ` ${t('partners.for')} ${selectedScheme}` : ''}
                   </span>
                 </div>
 
@@ -331,10 +369,10 @@ export default function PartnerLocator() {
                   <div className="card" style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
                     <MapPin size={40} color="var(--slate-400)" style={{ margin: '0 auto 1rem' }} />
                     <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--slate-800)', marginBottom: '0.5rem' }}>
-                      No Partners Found Within {coords.radius_km} km
+                      {t('partners.noneTitle')} {coords.radius_km} km
                     </h3>
                     <p style={{ fontSize: '0.875rem', color: 'var(--slate-500)', maxWidth: '420px', margin: '0 auto 1.25rem' }}>
-                      Try expanding your search radius (e.g. 250 km or 500 km) or selecting one of the demo city coordinates above.
+                      {t('partners.noneText')}
                     </p>
                     <button
                       type="button"
@@ -344,7 +382,7 @@ export default function PartnerLocator() {
                         handleSearch();
                       }}
                     >
-                      Expand Radius to 500 km
+                      {t('partners.expand')}
                     </button>
                   </div>
                 )}
@@ -356,14 +394,14 @@ export default function PartnerLocator() {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--slate-900)' }}>
-                    All Authorized Channel Partners ({allPartners.length})
+                    {t('partners.allTitle')} ({allPartners.length})
                   </h3>
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
                     onClick={() => handleSearch()}
                   >
-                    Back to Nearby Filter
+                    {t('partners.back')}
                   </button>
                 </div>
 
